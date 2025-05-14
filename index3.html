@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do List with Time and Background</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 400px;
+            margin: auto;
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            margin: 10px 0;
+            padding: 10px;
+            background: #00c3ff;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        button {
+            background: rgb(55, 0, 255);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        #displayTime {
+            font-weight: bold;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <h1>To-Do List</h1>
+    <input type="time" id="timeInput">
+    <input type="text" id="taskInput" placeholder="Add a new task" />
+    <button id="addTask">Add Task</button>
+    <p id="displayTime"></p>
+    <ul id="taskList"></ul>
+
+    <script>
+        const timeInput = document.getElementById('timeInput');
+        const taskInput = document.getElementById('taskInput');
+        const addTaskButton = document.getElementById('addTask');
+        const taskList = document.getElementById('taskList');
+        const displayTime = document.getElementById('displayTime');
+
+        // Load tasks from local storage
+        function loadTasks() {
+            const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+            tasks.forEach(item => addTaskToDOM(item.task, item.time));
+        }
+
+        // Save tasks to local storage
+        function saveTasks() {
+            const tasks = Array.from(taskList.children).map(item => {
+                const task = item.querySelector('span')?.textContent || '';
+                const time = item.querySelector('small')?.textContent?.replace(/[()]/g, '').trim() || '';
+                return { task, time };
+            });
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+
+        // Add task to DOM
+        function addTaskToDOM(task, time = '') {
+            const li = document.createElement('li');
+
+            const taskText = document.createElement('span');
+            taskText.textContent = task;
+
+            const timeLabel = document.createElement('small');
+            timeLabel.textContent = time ? ` (${time})` : '';
+            timeLabel.style.marginLeft = '10px';
+            timeLabel.style.fontSize = '0.9em';
+
+            const removeButton = document.createElement('button');
+            removeButton.textContent = 'Remove';
+            removeButton.onclick = () => {
+                li.remove();
+                saveTasks();
+            };
+
+            li.appendChild(taskText);
+            li.appendChild(timeLabel);
+            li.appendChild(removeButton);
+            taskList.appendChild(li);
+        }
+
+        // Set background color and image based on time
+        function setBackgroundByTime(hour = new Date().getHours()) {
+            let bgColor = '';
+            let bgImage = '';
+
+            if (hour >= 5 && hour < 12) {
+                bgColor = '#fff7d6';
+                bgImage = 'url("https://source.unsplash.com/400x800/?morning")';
+            } else if (hour >= 12 && hour < 17) {
+                bgColor = '#e0f7fa';
+                bgImage = 'url("https://source.unsplash.com/400x800/?afternoon")';
+            } else if (hour >= 17 && hour < 20) {
+                bgColor = '#ffd180';
+                bgImage = 'url("https://source.unsplash.com/400x800/?sunset")';
+            } else {
+                bgColor = '#263238';
+                bgImage = 'url("https://source.unsplash.com/400x800/?night")';
+            }
+
+            document.body.style.backgroundColor = bgColor;
+            document.body.style.backgroundImage = bgImage;
+            displayTime.textContent = Selected hour: ${hour}:00;
+        }
+
+        // When user selects time
+        timeInput.addEventListener('change', () => {
+            const timeValue = timeInput.value;
+            if (timeValue) {
+                const hour = parseInt(timeValue.split(':')[0]);
+                setBackgroundByTime(hour);
+            }
+        });
+
+        // When adding task
+        addTaskButton.onclick = () => {
+            const task = taskInput.value.trim();
+            const time = timeInput.value;
+            if (task) {
+                addTaskToDOM(task, time);
+                saveTasks();
+                taskInput.value = '';
+            }
+        };
+
+        // Initialize
+        loadTasks();
+        setBackgroundByTime();
+    </script>
+</body>
+</html>
